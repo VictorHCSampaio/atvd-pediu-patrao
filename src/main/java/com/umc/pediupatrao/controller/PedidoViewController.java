@@ -8,6 +8,7 @@ import com.umc.pediupatrao.service.ProdutoService;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.server.ResponseStatusException;
@@ -46,6 +47,18 @@ public class PedidoViewController {
         try {
             pedidoService.criarPedido(new PedidoRequest(clienteId, montarItens(produtoId, quantidade)));
             redirectAttributes.addFlashAttribute("sucesso", "Pedido registrado com sucesso!");
+        } catch (ResponseStatusException exception) {
+            redirectAttributes.addFlashAttribute("erro", exception.getReason());
+        }
+        return "redirect:/pedidos";
+    }
+
+    @PostMapping("/pedidos/{id}/status")
+    public String atualizarStatus(@PathVariable String id, @RequestParam String status,
+                                  RedirectAttributes redirectAttributes) {
+        try {
+            pedidoService.atualizarStatus(id, status);
+            redirectAttributes.addFlashAttribute("sucesso", "Status atualizado com sucesso!");
         } catch (ResponseStatusException exception) {
             redirectAttributes.addFlashAttribute("erro", exception.getReason());
         }

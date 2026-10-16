@@ -42,12 +42,13 @@
                         <th>Responsável</th>
                         <th>Entrada</th>
                         <th>Status</th>
+                        <th class="text-end pe-4">Ações</th>
                     </tr>
                 </thead>
                 <tbody>
                     <!-- Lista vazia -->
                     <tr th:if="${#lists.isEmpty(pedidos)}">
-                        <td colspan="8" class="text-center text-muted py-5">
+                        <td colspan="9" class="text-center text-muted py-5">
                             <i class="bi bi-inbox fs-3 d-block mb-2"></i>
                             Nenhum pedido encontrado.
                         </td>
@@ -73,6 +74,22 @@
                                                   (${pedido.status == 'EM_PREPARACAO'} ? 'bg-warning text-dark' : 'bg-secondary'))"
                                   th:text="${pedido.status}">
                             </span>
+                        </td>
+                        <td class="text-end pe-4">
+                            <div class="d-inline-flex gap-1 align-items-center">
+                                <form th:action="@{/pedidos/{id}/status(id=${pedido.id})}" method="post" class="d-inline-flex gap-1">
+                                    <select name="status" class="form-select form-select-sm" style="width:auto;">
+                                        <option value="EM_PREPARACAO">EM_PREPARACAO</option>
+                                        <option value="PRONTO">PRONTO</option>
+                                        <option value="SAIU_PARA_ENTREGA">SAIU_PARA_ENTREGA</option>
+                                        <option value="RETIRADO">RETIRADO</option>
+                                        <option value="FINALIZADO">FINALIZADO</option>
+                                    </select>
+                                    <button type="submit" class="btn btn-sm btn-outline-primary" title="Atualizar status">
+                                        <i class="bi bi-arrow-right-circle"></i>
+                                    </button>
+                                </form>
+                            </div>
                         </td>
                     </tr>
                 </tbody>
