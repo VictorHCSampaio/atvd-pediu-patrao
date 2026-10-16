@@ -1,5 +1,6 @@
 package com.umc.pediupatrao.controller;
 
+import com.umc.pediupatrao.dto.pedido.PedidoRequest;
 import com.umc.pediupatrao.entity.Pedido;
 import com.umc.pediupatrao.service.PedidoService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,8 +15,8 @@ public class PedidoController {
     private PedidoService pedidoService;
 
     @PostMapping
-    public Pedido criarPedido(@RequestBody Pedido pedido) {
-        return pedidoService.criarPedido(pedido);
+    public Pedido criarPedido(@RequestBody PedidoRequest request) {
+        return pedidoService.criarPedido(request);
     }
 
     @GetMapping
@@ -27,6 +28,4 @@ public class PedidoController {
     public Pedido atualizarStatus(@PathVariable String id, @RequestParam String status) {
         return pedidoService.atualizarStatus(id, status);
     }
-    
-    
 }

@@ -11,6 +11,9 @@
         <h2 class="fw-bold mb-0">
             <i class="bi bi-bag me-2 text-primary"></i>Pedidos
         </h2>
+        <a href="/pedidos/novo" class="btn btn-primary">
+            <i class="bi bi-plus-lg me-1"></i> Novo Pedido
+        </a>
     </div>
 
     <!-- Mensagens de feedback -->
@@ -33,16 +36,18 @@
                     <tr>
                         <th class="ps-4">ID</th>
                         <th>Cliente ID</th>
-                        <th>Tipo de Pizza</th>
-                        <th>Sabor</th>
-                        <th>Quantidade</th>
+                        <th>Itens</th>
+                        <th>Desconto</th>
+                        <th>Total</th>
+                        <th>Responsável</th>
+                        <th>Entrada</th>
                         <th>Status</th>
                     </tr>
                 </thead>
                 <tbody>
                     <!-- Lista vazia -->
                     <tr th:if="${#lists.isEmpty(pedidos)}">
-                        <td colspan="6" class="text-center text-muted py-5">
+                        <td colspan="8" class="text-center text-muted py-5">
                             <i class="bi bi-inbox fs-3 d-block mb-2"></i>
                             Nenhum pedido encontrado.
                         </td>
@@ -51,14 +56,21 @@
                     <tr th:each="pedido : ${pedidos}">
                         <td class="ps-4 text-muted" th:text="${pedido.id}"></td>
                         <td th:text="${pedido.clienteId}"></td>
-                        <td th:text="${pedido.tipoPizza}"></td>
-                        <td th:text="${pedido.sabor}"></td>
-                        <td th:text="${pedido.quantidade}"></td>
+                        <td>
+                            <span th:if="${#lists.isEmpty(pedido.itens)}" class="text-muted">—</span>
+                            <span th:each="item,stat : ${pedido.itens}">
+                                <span th:text="${item.quantidade} + 'x ' + ${item.nome}"></span><span th:if="${!stat.last}">, </span>
+                            </span>
+                        </td>
+                        <td th:text="${pedido.descontoPercentual > 0} ? ${pedido.descontoPercentual} + '%' : '—'"></td>
+                        <td th:text="'R$ ' + ${#numbers.formatDecimal(pedido.valorTotal, 1, 2)}"></td>
+                        <td th:text="${pedido.responsavelRegistro} ?: '—'"></td>
+                        <td th:text="${pedido.dataHoraEntrada != null} ? ${#temporals.format(pedido.dataHoraEntrada, 'dd/MM/yyyy HH:mm')} : '—'"></td>
                         <td>
                             <span class="badge"
-                                  th:classappend="${pedido.status == 'ENTREGUE'} ? 'bg-success' :
+                                  th:classappend="${pedido.status == 'FINALIZADO'} ? 'bg-success' :
                                                   (${pedido.status == 'CANCELADO'} ? 'bg-danger' :
-                                                  (${pedido.status == 'EM_PREPARO'} ? 'bg-warning text-dark' : 'bg-secondary'))"
+                                                  (${pedido.status == 'EM_PREPARACAO'} ? 'bg-warning text-dark' : 'bg-secondary'))"
                                   th:text="${pedido.status}">
                             </span>
                         </td>
