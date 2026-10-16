@@ -16,14 +16,23 @@ public class UsuarioDetailsService implements UserDetailsService {
         this.usuarioRepository = usuarioRepository;
     }
 
+    private static final String PERFIL_PADRAO = "ATENDENTE";
+
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
         return usuarioRepository.findByUsername(username)
                 .map(usuario -> User.builder()
                         .username(usuario.getUsername())
                         .password(usuario.getPassword())
-                        .roles("USER") // Adicione roles conforme necessário
+                        .roles(perfilDeUsuario(usuario))
                         .build())
                 .orElseThrow(() -> new UsernameNotFoundException("Usuário não encontrado"));
+    }
+
+    private String perfilDeUsuario(com.umc.pediupatrao.entity.Usuario usuario) {
+        if (usuario.getRole() == null || usuario.getRole().isBlank()) {
+            return PERFIL_PADRAO;
+        }
+        return usuario.getRole();
     }
 }
