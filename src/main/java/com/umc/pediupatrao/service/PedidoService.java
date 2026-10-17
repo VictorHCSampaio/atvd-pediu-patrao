@@ -3,12 +3,15 @@ package com.umc.pediupatrao.service;
 import com.umc.pediupatrao.config.UsuarioAutenticado;
 import com.umc.pediupatrao.dto.pedido.ItemPedidoRequest;
 import com.umc.pediupatrao.dto.pedido.PedidoRequest;
+import com.umc.pediupatrao.entity.AlteracaoCampo;
 import com.umc.pediupatrao.entity.ItemPedido;
 import com.umc.pediupatrao.entity.Pedido;
 import com.umc.pediupatrao.entity.Produto;
+import com.umc.pediupatrao.model.AcaoAuditoria;
 import com.umc.pediupatrao.model.StatusPedido;
 import com.umc.pediupatrao.repository.PedidoRepository;
 import com.umc.pediupatrao.repository.ProdutoRepository;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
@@ -23,13 +26,19 @@ import static org.springframework.http.HttpStatus.NOT_FOUND;
 @Service
 public class PedidoService {
 
+    private static final String ENTIDADE = "Pedido";
+    private static final double DESCONTO_MAXIMO = 20.0;
+
     private final PedidoRepository pedidoRepository;
     private final ProdutoRepository produtoRepository;
+    private final AuditoriaService auditoriaService;
 
     public PedidoService(PedidoRepository pedidoRepository,
-                         ProdutoRepository produtoRepository) {
+                         ProdutoRepository produtoRepository,
+                         AuditoriaService auditoriaService) {
         this.pedidoRepository = pedidoRepository;
         this.produtoRepository = produtoRepository;
+        this.auditoriaService = auditoriaService;
     }
 
     public List<Pedido> listarPedidos() {
@@ -40,6 +49,7 @@ public class PedidoService {
         return pedidoRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(NOT_FOUND, "Pedido não encontrado."));
     }
+
 
     public Pedido criarPedido(PedidoRequest request) {
         if (request == null || request.itens() == null || request.itens().isEmpty()) {
@@ -74,9 +84,13 @@ public class PedidoService {
                 .dataHoraEntrada(LocalDateTime.now())
                 .build();
 
-        return pedidoRepository.save(pedido);
+        Pedido salvo = pedidoRepository.save(pedido);
+        auditoriaService.registrar(AcaoAuditoria.PEDIDO_CRIADO, ENTIDADE, salvo.getId(),
+                List.of(new AlteracaoCampo("status", null, StatusPedido.RECEBIDO.name())));
+        return salvo;
     }
 
+    // Aplica uma transição de status, validando o fluxo e registrando entrada/saída.
     public Pedido atualizarStatus(String id, String novoStatusTexto) {
         Pedido pedido = buscarPorId(id);
         StatusPedido atual = statusAtual(pedido);
@@ -96,7 +110,63 @@ public class PedidoService {
             pedido.setDataHoraSaida(LocalDateTime.now());
         }
 
-        return pedidoRepository.save(pedido);
+        Pedido salvo = pedidoRepository.save(pedido);
+        auditoriaService.registrar(AcaoAuditoria.PEDIDO_STATUS_ALTERADO, ENTIDADE, salvo.getId(),
+                List.of(new AlteracaoCampo("status", atual.name(), destino.name())));
+        return salvo;
+    }
+
+    // Desconto exclusivo do gerente, percentual, limitado a 20% e somente antes da saída.
+    @PreAuthorize("hasRole('GERENTE')")
+    public Pedido aplicarDesconto(String id, double percentual) {
+        Pedido pedido = buscarPorId(id);
+        StatusPedido atual = statusAtual(pedido);
+
+        if (!atual.antesDaSaida()) {
+            throw new ResponseStatusException(CONFLICT, "Desconto só pode ser aplicado antes da saída do pedido.");
+        }
+        if (percentual <= 0 || percentual > DESCONTO_MAXIMO) {
+            throw new ResponseStatusException(BAD_REQUEST, "O desconto deve ser maior que zero e no máximo 20%.");
+        }
+
+        double descontoAnterior = pedido.getDescontoPercentual();
+        double totalAnterior = pedido.getValorTotal();
+
+        pedido.setDescontoPercentual(percentual);
+        pedido.setValorTotal(calcularTotal(pedido.getItens(), percentual));
+
+        Pedido salvo = pedidoRepository.save(pedido);
+        auditoriaService.registrar(AcaoAuditoria.PEDIDO_DESCONTO_APLICADO, ENTIDADE, salvo.getId(), List.of(
+                new AlteracaoCampo("descontoPercentual", String.valueOf(descontoAnterior), String.valueOf(percentual)),
+                new AlteracaoCampo("valorTotal", String.valueOf(totalAnterior), String.valueOf(salvo.getValorTotal()))
+        ));
+        return salvo;
+    }
+
+    // Cancelamento exclusivo do gerente, com justificativa e somente antes da saída.
+    // Preserva os dados históricos e impede qualquer alteração posterior.
+    @PreAuthorize("hasRole('GERENTE')")
+    public Pedido cancelar(String id, String justificativa) {
+        Pedido pedido = buscarPorId(id);
+        StatusPedido atual = statusAtual(pedido);
+
+        if (justificativa == null || justificativa.isBlank()) {
+            throw new ResponseStatusException(BAD_REQUEST, "O cancelamento exige uma justificativa.");
+        }
+        if (atual.finalizado()) {
+            throw new ResponseStatusException(CONFLICT, "Pedido já finalizado ou cancelado não pode ser cancelado.");
+        }
+        if (!atual.antesDaSaida()) {
+            throw new ResponseStatusException(CONFLICT, "Pedido que já saiu para entrega ou foi retirado não pode ser cancelado.");
+        }
+
+        pedido.setStatus(StatusPedido.CANCELADO.name());
+        pedido.setJustificativaCancelamento(justificativa);
+
+        Pedido salvo = pedidoRepository.save(pedido);
+        auditoriaService.registrar(AcaoAuditoria.PEDIDO_CANCELADO, ENTIDADE, salvo.getId(),
+                List.of(new AlteracaoCampo("status", atual.name(), StatusPedido.CANCELADO.name())), justificativa);
+        return salvo;
     }
 
     private double calcularTotal(List<ItemPedido> itens, double descontoPercentual) {

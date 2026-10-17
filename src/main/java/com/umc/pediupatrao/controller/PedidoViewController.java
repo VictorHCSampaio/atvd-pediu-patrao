@@ -65,6 +65,30 @@ public class PedidoViewController {
         return "redirect:/pedidos";
     }
 
+    @PostMapping("/pedidos/{id}/desconto")
+    public String aplicarDesconto(@PathVariable String id, @RequestParam double percentual,
+                                  RedirectAttributes redirectAttributes) {
+        try {
+            pedidoService.aplicarDesconto(id, percentual);
+            redirectAttributes.addFlashAttribute("sucesso", "Desconto aplicado com sucesso!");
+        } catch (ResponseStatusException exception) {
+            redirectAttributes.addFlashAttribute("erro", exception.getReason());
+        }
+        return "redirect:/pedidos";
+    }
+
+    @PostMapping("/pedidos/{id}/cancelar")
+    public String cancelar(@PathVariable String id, @RequestParam String justificativa,
+                           RedirectAttributes redirectAttributes) {
+        try {
+            pedidoService.cancelar(id, justificativa);
+            redirectAttributes.addFlashAttribute("sucesso", "Pedido cancelado com sucesso!");
+        } catch (ResponseStatusException exception) {
+            redirectAttributes.addFlashAttribute("erro", exception.getReason());
+        }
+        return "redirect:/pedidos";
+    }
+
     private List<ItemPedidoRequest> montarItens(List<String> produtoId, List<Integer> quantidade) {
         List<ItemPedidoRequest> itens = new ArrayList<>();
         if (produtoId == null || quantidade == null) {

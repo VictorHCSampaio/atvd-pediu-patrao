@@ -21,9 +21,11 @@ import org.springframework.security.web.authentication.AuthenticationSuccessHand
 public class SecurityConfig {
 
     private final UsuarioDetailsService usuarioDetailsService;
+    private final AcessoNegadoHandler acessoNegadoHandler;
 
-    public SecurityConfig(UsuarioDetailsService usuarioDetailsService) {
+    public SecurityConfig(UsuarioDetailsService usuarioDetailsService, AcessoNegadoHandler acessoNegadoHandler) {
         this.usuarioDetailsService = usuarioDetailsService;
+        this.acessoNegadoHandler = acessoNegadoHandler;
     }
 
     @Bean
@@ -54,6 +56,8 @@ public class SecurityConfig {
                         .requestMatchers("/login", "/css/**", "/dist/**", "/plugins/**", "/js/**", "/images/**").permitAll()
                         // Administração de usuários e perfis: exclusiva do ADMIN.
                         .requestMatchers("/usuarios/**", "/api/usuarios/**").hasRole("ADMIN")
+                        // Consulta de auditoria: apenas ADMIN e GERENTE.
+                        .requestMatchers("/auditoria/**", "/api/auditoria/**").hasAnyRole("ADMIN", "GERENTE")
                         .anyRequest().authenticated()
                 )
                 .formLogin(form -> form
@@ -65,7 +69,8 @@ public class SecurityConfig {
                         .logoutUrl("/logout")
                         .logoutSuccessUrl("/login?logout")
                         .permitAll()
-                );
+                )
+                .exceptionHandling(ex -> ex.accessDeniedHandler(acessoNegadoHandler));
 
         return http.build();
     }

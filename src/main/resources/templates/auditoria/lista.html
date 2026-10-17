@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Auditoria</title>
+</head>
+<body>
+
+<div th:fragment="content">
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="fw-bold mb-0">
+            <i class="bi bi-shield-check me-2 text-primary"></i>Auditoria
+        </h2>
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="card-body p-0">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-dark">
+                    <tr>
+                        <th class="ps-4">Data e hora</th>
+                        <th>Usuário</th>
+                        <th>Perfil</th>
+                        <th>Operação</th>
+                        <th>Entidade</th>
+                        <th>Alterações</th>
+                        <th>Justificativa</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:if="${#lists.isEmpty(registros)}">
+                        <td colspan="7" class="text-center text-muted py-5">
+                            <i class="bi bi-inbox fs-3 d-block mb-2"></i>
+                            Nenhum registro de auditoria.
+                        </td>
+                    </tr>
+                    <tr th:each="registro : ${registros}">
+                        <td class="ps-4 text-muted"
+                            th:text="${registro.dataHora != null} ? ${#temporals.format(registro.dataHora, 'dd/MM/yyyy HH:mm')} : '—'"></td>
+                        <td th:text="${registro.usuario}"></td>
+                        <td>
+                            <span class="badge"
+                                  th:classappend="${registro.perfil == 'ADMIN'} ? 'bg-danger' :
+                                                  (${registro.perfil == 'GERENTE'} ? 'bg-primary' : 'bg-secondary')"
+                                  th:text="${registro.perfil} ?: '—'"></span>
+                        </td>
+                        <td th:text="${registro.acao}"></td>
+                        <td>
+                            <span th:text="${registro.entidade}"></span>
+                            <span class="text-muted small d-block" th:text="${registro.entidadeId}"></span>
+                        </td>
+                        <td>
+                            <span th:if="${#lists.isEmpty(registro.alteracoes)}" class="text-muted">—</span>
+                            <div th:each="alteracao : ${registro.alteracoes}" class="small">
+                                <strong th:text="${alteracao.campo}"></strong>:
+                                <span class="text-muted" th:text="${alteracao.valorAnterior} ?: '(vazio)'"></span>
+                                <i class="bi bi-arrow-right mx-1"></i>
+                                <span th:text="${alteracao.valorNovo} ?: '(vazio)'"></span>
+                            </div>
+                        </td>
+                        <td th:text="${registro.justificativa} ?: '—'"></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        <div class="card-footer text-muted small" th:if="${!#lists.isEmpty(registros)}">
+            Total: <strong th:text="${#lists.size(registros)}"></strong> registro(s)
+        </div>
+    </div>
+
+</div>
+
+</body>
+</html>
