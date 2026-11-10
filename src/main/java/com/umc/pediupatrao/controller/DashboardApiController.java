@@ -19,7 +19,7 @@ public class DashboardApiController {
         this.dashboardService = dashboardService;
     }
 
-    // Endpoint único que retorna todos os dados do dashboard
+
     @GetMapping("/completo")
     public DashboardCompletoResponse dashboardCompleto(
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dataInicio,
@@ -35,7 +35,7 @@ public class DashboardApiController {
         );
     }
 
-    // RF01 — Indicadores gerais de vendas
+
     @GetMapping("/indicadores")
     public IndicadoresGeraisResponse indicadores(
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dataInicio,
@@ -43,7 +43,7 @@ public class DashboardApiController {
         return dashboardService.indicadoresGerais(toInicio(dataInicio), toFim(dataFim));
     }
 
-    // RF02 — Análise de vendas (gráfico de vendas por dia)
+
     @GetMapping("/vendas-por-periodo")
     public List<VendasPorPeriodoResponse> vendasPorPeriodo(
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dataInicio,
@@ -51,7 +51,7 @@ public class DashboardApiController {
         return dashboardService.vendasPorPeriodo(toInicio(dataInicio), toFim(dataFim));
     }
 
-    // RF03 — Situação dos pedidos (gráfico de pizza por status)
+
     @GetMapping("/situacao-pedidos")
     public List<StatusPedidoResponse> situacaoPedidos(
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dataInicio,
@@ -59,7 +59,7 @@ public class DashboardApiController {
         return dashboardService.situacaoPedidos(toInicio(dataInicio), toFim(dataFim));
     }
 
-    // RF04 — Produtos mais vendidos (ranking)
+
     @GetMapping("/produtos-mais-vendidos")
     public List<ProdutoMaisVendidoResponse> produtosMaisVendidos(
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dataInicio,
@@ -68,7 +68,7 @@ public class DashboardApiController {
         return dashboardService.produtosMaisVendidos(toInicio(dataInicio), toFim(dataFim), limite);
     }
 
-    // Vendas agrupadas por tipo de produto
+
     @GetMapping("/vendas-por-tipo")
     public List<VendasPorTipoProdutoResponse> vendasPorTipo(
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dataInicio,
@@ -76,7 +76,7 @@ public class DashboardApiController {
         return dashboardService.vendasPorTipoProduto(toInicio(dataInicio), toFim(dataFim));
     }
 
-    // --- helpers para converter LocalDate em LocalDateTime ---
+
 
     private LocalDateTime toInicio(LocalDate data) {
         return data != null ? data.atStartOfDay() : null;
