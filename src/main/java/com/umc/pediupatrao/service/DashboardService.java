@@ -26,7 +26,7 @@ public class DashboardService {
         this.produtoRepository = produtoRepository;
     }
 
-    // RF01 — Indicadores gerais de vendas
+
     public IndicadoresGeraisResponse indicadoresGerais(LocalDateTime inicio, LocalDateTime fim) {
         List<Pedido> pedidos = filtrarPorPeriodo(inicio, fim);
 
@@ -53,7 +53,7 @@ public class DashboardService {
         );
     }
 
-    // RF02 — Análise de vendas por período (agrupado por dia)
+
     public List<VendasPorPeriodoResponse> vendasPorPeriodo(LocalDateTime inicio, LocalDateTime fim) {
         List<Pedido> pedidos = filtrarPorPeriodo(inicio, fim).stream()
                 .filter(p -> StatusPedido.FINALIZADO.name().equals(p.getStatus()))
@@ -78,30 +78,28 @@ public class DashboardService {
                 .toList();
     }
 
-    // RF03 — Situação dos pedidos (quantidade por status)
+
     public List<StatusPedidoResponse> situacaoPedidos(LocalDateTime inicio, LocalDateTime fim) {
         List<Pedido> pedidos = filtrarPorPeriodo(inicio, fim);
 
         Map<String, Long> contagem = pedidos.stream()
                 .collect(Collectors.groupingBy(Pedido::getStatus, Collectors.counting()));
 
-        // Garante que todos os status apareçam, mesmo com zero.
+
         return Arrays.stream(StatusPedido.values())
                 .map(s -> new StatusPedidoResponse(s.name(), contagem.getOrDefault(s.name(), 0L)))
                 .toList();
     }
 
-    // RF04 — Produtos mais vendidos (ranking)
+
     public List<ProdutoMaisVendidoResponse> produtosMaisVendidos(LocalDateTime inicio, LocalDateTime fim, int limite) {
         List<Pedido> pedidos = filtrarPorPeriodo(inicio, fim).stream()
                 .filter(p -> !StatusPedido.CANCELADO.name().equals(p.getStatus()))
                 .toList();
 
-        // Mapa de produtoId -> Produto para resolver nomes
-        Map<String, Produto> produtosMap = produtoRepository.findAll().stream()
-                .collect(Collectors.toMap(Produto::getId, p -> p, (a, b) -> a));
 
-        // Agrupa itens por produtoId
+        Map<String, Produto> produtosMap = produtoRepository.findAll().stream()
+                .collect(Collectors.toMap(Produto::getId, p -> p, (a, b) ->  // Agrupa itens por produtoId
         Map<String, List<ItemPedido>> itensPorProduto = pedidos.stream()
                 .filter(p -> p.getItens() != null)
                 .flatMap(p -> p.getItens().stream())
@@ -123,7 +121,7 @@ public class DashboardService {
                 .toList();
     }
 
-    // Vendas agrupadas por tipo de produto (Pizza, Esfiha, Bebida, Lanche)
+
     public List<VendasPorTipoProdutoResponse> vendasPorTipoProduto(LocalDateTime inicio, LocalDateTime fim) {
         List<Pedido> pedidos = filtrarPorPeriodo(inicio, fim).stream()
                 .filter(p -> !StatusPedido.CANCELADO.name().equals(p.getStatus()))
@@ -150,7 +148,7 @@ public class DashboardService {
                 .toList();
     }
 
-    // --- helpers ---
+
 
     private List<Pedido> filtrarPorPeriodo(LocalDateTime inicio, LocalDateTime fim) {
         List<Pedido> todos = pedidoRepository.findAll();
