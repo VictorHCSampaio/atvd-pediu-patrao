@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Dashboard</title>
+</head>
+<body>
+
+<div class="container-fluid py-3" th:fragment="content">
+    <h2 class="mb-4"><i class="bi bi-graph-up"></i> Dashboard Administrativo</h2>
+
+
+    <div class="card mb-4">
+        <div class="card-body">
+            <form id="filtroForm" class="row g-3 align-items-end">
+                <div class="col-md-3">
+                    <label for="dataInicio" class="form-label">Data Início</label>
+                    <input type="date" class="form-control" id="dataInicio">
+                </div>
+                <div class="col-md-3">
+                    <label for="dataFim" class="form-label">Data Fim</label>
+                    <input type="date" class="form-control" id="dataFim">
+                </div>
+                <div class="col-md-3">
+                    <button type="button" class="btn btn-primary" onclick="carregarDashboard()">
+                        <i class="bi bi-funnel"></i> Filtrar
+                    </button>
+                    <button type="button" class="btn btn-outline-secondary" onclick="limparFiltros()">
+                        <i class="bi bi-x-circle"></i> Limpar
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+
+    <div class="row mb-4" id="indicadores">
+        <div class="col-md-3 col-sm-6 mb-3">
+            <div class="card text-white bg-primary h-100">
+                <div class="card-body text-center">
+                    <h6 class="card-title"><i class="bi bi-bag"></i> Total de Pedidos</h6>
+                    <h3 id="totalPedidos">0</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 col-sm-6 mb-3">
+            <div class="card text-white bg-success h-100">
+                <div class="card-body text-center">
+                    <h6 class="card-title"><i class="bi bi-currency-dollar"></i> Faturamento</h6>
+                    <h3 id="faturamentoTotal">R$ 0,00</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 col-sm-6 mb-3">
+            <div class="card text-white bg-info h-100">
+                <div class="card-body text-center">
+                    <h6 class="card-title"><i class="bi bi-receipt"></i> Ticket Médio</h6>
+                    <h3 id="ticketMedio">R$ 0,00</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 col-sm-6 mb-3">
+            <div class="card text-white bg-danger h-100">
+                <div class="card-body text-center">
+                    <h6 class="card-title"><i class="bi bi-x-circle"></i> Taxa Cancelamento</h6>
+                    <h3 id="taxaCancelamento">0%</h3>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mb-4">
+        <div class="col-md-4 col-sm-6 mb-3">
+            <div class="card border-success h-100">
+                <div class="card-body text-center">
+                    <h6 class="card-title text-success"><i class="bi bi-check-circle"></i> Finalizados</h6>
+                    <h3 id="pedidosFinalizados" class="text-success">0</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 col-sm-6 mb-3">
+            <div class="card border-warning h-100">
+                <div class="card-body text-center">
+                    <h6 class="card-title text-warning"><i class="bi bi-hourglass-split"></i> Em Andamento</h6>
+                    <h3 id="pedidosEmAndamento" class="text-warning">0</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 col-sm-6 mb-3">
+            <div class="card border-danger h-100">
+                <div class="card-body text-center">
+                    <h6 class="card-title text-danger"><i class="bi bi-x-octagon"></i> Cancelados</h6>
+                    <h3 id="pedidosCancelados" class="text-danger">0</h3>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mb-4">
+        <div class="col-md-8 mb-3">
+            <div class="card h-100">
+                <div class="card-header"><i class="bi bi-bar-chart"></i> Vendas por Período</div>
+                <div class="card-body">
+                    <canvas id="graficoVendasPeriodo"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 mb-3">
+            <div class="card h-100">
+                <div class="card-header"><i class="bi bi-pie-chart"></i> Situação dos Pedidos</div>
+                <div class="card-body">
+                    <canvas id="graficoSituacao"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mb-4">
+        <div class="col-md-6 mb-3">
+            <div class="card h-100">
+                <div class="card-header"><i class="bi bi-trophy"></i> Top 10 Produtos Mais Vendidos</div>
+                <div class="card-body">
+                    <canvas id="graficoProdutos"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6 mb-3">
+            <div class="card h-100">
+                <div class="card-header"><i class="bi bi-pie-chart-fill"></i> Vendas por Tipo de Produto</div>
+                <div class="card-body">
+                    <canvas id="graficoTipo"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header"><i class="bi bi-table"></i> Ranking de Produtos</div>
+                <div class="card-body table-responsive">
+                    <table class="table table-striped table-hover">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>Produto</th>
+                                <th>Qtd. Vendida</th>
+                                <th>Faturamento</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tabelaProdutos">
+                            <tr><td colspan="4" class="text-center">Carregando...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+
+    <script>
+
+    let chartVendas, chartSituacao, chartProdutos, chartTipo;
+
+
+    function montarParametros() {
+        const params = new URLSearchParams();
+        const inicio = document.getElementById('dataInicio').value;
+        const fim = document.getElementById('dataFim').value;
+        if (inicio) params.append('dataInicio', inicio);
+        if (fim) params.append('dataFim', fim);
+        return params.toString();
+    }
+
+    async function fetchApi(endpoint) {
+        const params = montarParametros();
+        const url = '/api/dashboard/' + endpoint + (params ? '?' + params : '');
+        try {
+            const response = await fetch(url);
+            if (!response.ok) throw new Error('Erro ao buscar ' + endpoint);
+            return await response.json();
+        } catch (error) {
+            console.error('Erro:', error);
+            return null;
+        }
+    }
+
+    function formatarMoeda(valor) {
+        return 'R$ ' + valor.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    }
+
+
+    async function carregarIndicadores() {
+        const dados = await fetchApi('indicadores');
+        if (!dados) return;
+        document.getElementById('totalPedidos').textContent = dados.totalPedidos;
+        document.getElementById('faturamentoTotal').textContent = formatarMoeda(dados.faturamentoTotal);
+        document.getElementById('ticketMedio').textContent = formatarMoeda(dados.ticketMedio);
+        document.getElementById('taxaCancelamento').textContent = dados.taxaCancelamento.toFixed(1) + '%';
+        document.getElementById('pedidosFinalizados').textContent = dados.pedidosFinalizados;
+        document.getElementById('pedidosEmAndamento').textContent = dados.pedidosEmAndamento;
+        document.getElementById('pedidosCancelados').textContent = dados.pedidosCancelados;
+    }
+
+    async function carregarVendasPeriodo() {
+        const dados = await fetchApi('vendas-por-periodo');
+        if (!dados) return;
+
+        if (chartVendas) chartVendas.destroy();
+
+        chartVendas = new Chart(document.getElementById('graficoVendasPeriodo'), {
+            type: 'bar',
+            data: {
+                labels: dados.map(d => d.periodo),
+                datasets: [{
+                    label: 'Faturamento (R$)',
+                    data: dados.map(d => d.valorTotal),
+                    backgroundColor: 'rgba(54, 162, 235, 0.7)',
+                    borderColor: 'rgba(54, 162, 235, 1)',
+                    borderWidth: 1
+                }, {
+                    label: 'Qtd. Pedidos',
+                    data: dados.map(d => d.quantidadePedidos),
+                    type: 'line',
+                    borderColor: 'rgba(255, 99, 132, 1)',
+                    backgroundColor: 'rgba(255, 99, 132, 0.2)',
+                    yAxisID: 'y1',
+                    tension: 0.3
+                }]
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    y: { beginAtZero: true, title: { display: true, text: 'Faturamento (R$)' } },
+                    y1: { beginAtZero: true, position: 'right', title: { display: true, text: 'Qtd. Pedidos' }, grid: { drawOnChartArea: false } }
+                }
+            }
+        });
+    }
+
+    async function carregarSituacao() {
+        const dados = await fetchApi('situacao-pedidos');
+        if (!dados) return;
+
+        if (chartSituacao) chartSituacao.destroy();
+
+        const cores = {
+            'RECEBIDO': '#17a2b8',
+            'EM_PREPARACAO': '#ffc107',
+            'PRONTO': '#28a745',
+            'SAIU_PARA_ENTREGA': '#007bff',
+            'RETIRADO': '#6f42c1',
+            'FINALIZADO': '#20c997',
+            'CANCELADO': '#dc3545'
+        };
+
+        chartSituacao = new Chart(document.getElementById('graficoSituacao'), {
+            type: 'doughnut',
+            data: {
+                labels: dados.map(d => d.status.replace(/_/g, ' ')),
+                datasets: [{
+                    data: dados.map(d => d.quantidade),
+                    backgroundColor: dados.map(d => cores[d.status] || '#6c757d')
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: { legend: { position: 'bottom' } }
+            }
+        });
+    }
+
+    async function carregarProdutosMaisVendidos() {
+        const dados = await fetchApi('produtos-mais-vendidos?limite=10');
+        if (!dados) return;
+
+        if (chartProdutos) chartProdutos.destroy();
+
+        chartProdutos = new Chart(document.getElementById('graficoProdutos'), {
+            type: 'bar',
+            data: {
+                labels: dados.map(d => d.nome),
+                datasets: [{
+                    label: 'Quantidade Vendida',
+                    data: dados.map(d => d.quantidadeVendida),
+                    backgroundColor: 'rgba(255, 159, 64, 0.7)',
+                    borderColor: 'rgba(255, 159, 64, 1)',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                indexAxis: 'y',
+                scales: { x: { beginAtZero: true } }
+            }
+        });
+
+
+        const tbody = document.getElementById('tabelaProdutos');
+        if (dados.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="4" class="text-center text-muted">Nenhum produto vendido no período.</td></tr>';
+            return;
+        }
+        tbody.innerHTML = dados.map((d, i) =>
+            '<tr>' +
+            '<td>' + (i + 1) + '</td>' +
+            '<td>' + d.nome + '</td>' +
+            '<td>' + d.quantidadeVendida + '</td>' +
+            '<td>' + formatarMoeda(d.faturamento) + '</td>' +
+            '</tr>'
+        ).join('');
+    }
+
+    async function carregarVendasPorTipo() {
+        const dados = await fetchApi('vendas-por-tipo');
+        if (!dados) return;
+
+        if (chartTipo) chartTipo.destroy();
+
+        const coresTipo = ['#ff6384', '#36a2eb', '#ffce56', '#4bc0c0', '#9966ff', '#ff9f40'];
+
+        chartTipo = new Chart(document.getElementById('graficoTipo'), {
+            type: 'pie',
+            data: {
+                labels: dados.map(d => d.tipo),
+                datasets: [{
+                    data: dados.map(d => d.faturamento),
+                    backgroundColor: coresTipo.slice(0, dados.length)
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: { legend: { position: 'bottom' } }
+            }
+        });
+    }
+
+    function carregarDashboard() {
+        carregarIndicadores();
+        carregarVendasPeriodo();
+        carregarSituacao();
+        carregarProdutosMaisVendidos();
+        carregarVendasPorTipo();
+    }
+
+    function limparFiltros() {
+        document.getElementById('dataInicio').value = '';
+        document.getElementById('dataFim').value = '';
+        carregarDashboard();
+    }
+
+
+    document.addEventListener('DOMContentLoaded', carregarDashboard);
+    </script>
+</div>
+
+</body>
+</html>
