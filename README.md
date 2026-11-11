@@ -40,3 +40,4 @@ Na primeira execução, o sistema cria automaticamente os seguintes usuários no
 | `admin`    | `teste123` | ADMIN     |
 | `gerente`  | `teste123` | GERENTE   |
 | `atendente`| `teste123` | ATENDENTE |
+
